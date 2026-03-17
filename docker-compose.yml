@@ -1,0 +1,42 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    networks:
+      - music-net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Bogota
+    volumes:
+      - ./jellyfin/config:/config
+      - /home/mawfy/Projects/music-server/media:/media
+      # Añadimos la carpeta de descargas para que Jellyfin la monitoree
+      - /home/mawfy/Projects/music-server/downloads:/downloads
+    ports:
+      - 8096:8096
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    networks:
+      - music-net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Bogota
+      - WEBUI_PORT=8080
+    volumes:
+      - ./qbittorrent/config:/config
+      - /home/mawfy/Projects/music-server/downloads:/downloads
+      - /home/mawfy/Projects/music-server/media:/media
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+
+networks:
+  music-net:
+    driver: bridge
