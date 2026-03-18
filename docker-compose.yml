@@ -1,5 +1,4 @@
 services:
-  # --- ADMINISTRATION ---
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
@@ -11,11 +10,10 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./portainer_data:/data
+      - ${MEDIA_PATH}/portainer_data:/data
     ports:
       - 9443:9443
 
-  # --- MEDIA & DOWNLOADS ---
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
@@ -26,9 +24,8 @@ services:
       - PGID=1000
       - TZ=America/Bogota
     volumes:
-      - ./jellyfin/config:/config
-      - ${HOME}/music-server/media:/media
-      - ${HOME}/music-server/downloads:/downloads
+      - ${MEDIA_PATH}/jellyfin/config:/config
+      - ${MEDIA_PATH}/media:/media
     ports:
       - 8096:8096
     restart: unless-stopped
@@ -44,8 +41,8 @@ services:
       - TZ=America/Bogota
       - WEBUI_PORT=8080
     volumes:
-      - ./qbittorrent/config:/config
-      - ${HOME}/music-server/downloads:/downloads
+      - ${MEDIA_PATH}/qbittorrent/config:/config
+      - ${MEDIA_PATH}/downloads:/downloads
     ports:
       - 8080:8080
       - 6881:6881
@@ -63,11 +60,27 @@ services:
       - TZ=America/Bogota
       - SLSKD_REMOTE_CONFIGURATION=true
     volumes:
-      - ./slskd/config:/app/config
-      - ${HOME}/music-server/downloads/soulseek:/app/downloads
+      - ${MEDIA_PATH}/slskd/config:/app/config
+      - ${MEDIA_PATH}/downloads:/downloads
     ports:
       - 5030:5030
       - 50300:50300
+    restart: unless-stopped
+
+  shelfmark:
+    image: ghcr.io/calibrain/shelfmark:latest
+    container_name: shelfmark
+    networks:
+      - music-net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Bogota
+    ports:
+      - 8084:8084
+    volumes:
+      - ${MEDIA_PATH}/shelfmark/config:/config
+      - ${MEDIA_PATH}/media/books:/books
     restart: unless-stopped
 
 networks:
