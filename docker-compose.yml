@@ -1,4 +1,22 @@
 services:
+  # --- ADMINISTRACIÓN ---
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    networks:
+      - music-net
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Permite a Portainer ver tus otros contenedores
+      - ./portainer_data:/data # Guarda tus usuarios y configuraciones de Portainer
+    ports:
+      - 9443:9443 # Interfaz Web Segura (HTTPS)
+    # Nota: La primera vez que entres te pedirá crear un admin
+
+  # --- MEDIA & DOWNLOADS ---
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
@@ -11,7 +29,6 @@ services:
     volumes:
       - ./jellyfin/config:/config
       - /home/mawfy/Projects/music-server/media:/media
-      # Añadimos la carpeta de descargas para que Jellyfin la monitoree
       - /home/mawfy/Projects/music-server/downloads:/downloads
     ports:
       - 8096:8096
@@ -35,6 +52,7 @@ services:
       - 6881:6881
       - 6881:6881/udp
     restart: unless-stopped
+
   slskd:
     image: slskd/slskd:latest
     container_name: slskd
@@ -44,13 +62,13 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Bogota
-      - SLSKD_REMOTE_CONFIGURATION=true # Para configurar todo desde la web
+      - SLSKD_REMOTE_CONFIGURATION=true
     volumes:
       - ./slskd/config:/app/config
       - /home/mawfy/Projects/music-server/downloads/soulseek:/app/downloads
     ports:
-      - 5030:5030 # Interfaz Web
-      - 50300:50300 # Puerto para transferencias
+      - 5030:5030
+      - 50300:50300
     restart: unless-stopped
 
 networks:
