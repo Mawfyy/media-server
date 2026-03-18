@@ -1,5 +1,5 @@
 services:
-  # --- ADMINISTRACIÓN ---
+  # --- ADMINISTRATION ---
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
@@ -10,11 +10,10 @@ services:
       - no-new-privileges:true
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro # Permite a Portainer ver tus otros contenedores
-      - ./portainer_data:/data # Guarda tus usuarios y configuraciones de Portainer
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./portainer_data:/data
     ports:
-      - 9443:9443 # Interfaz Web Segura (HTTPS)
-    # Nota: La primera vez que entres te pedirá crear un admin
+      - 9443:9443
 
   # --- MEDIA & DOWNLOADS ---
   jellyfin:
@@ -28,8 +27,8 @@ services:
       - TZ=America/Bogota
     volumes:
       - ./jellyfin/config:/config
-      - /home/mawfy/Projects/music-server/media:/media
-      - /home/mawfy/Projects/music-server/downloads:/downloads
+      - ${HOME}/music-server/media:/media
+      - ${HOME}/music-server/downloads:/downloads
     ports:
       - 8096:8096
     restart: unless-stopped
@@ -46,7 +45,7 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - ./qbittorrent/config:/config
-      - /home/mawfy/Projects/music-server/downloads:/downloads
+      - ${HOME}/music-server/downloads:/downloads
     ports:
       - 8080:8080
       - 6881:6881
@@ -65,7 +64,7 @@ services:
       - SLSKD_REMOTE_CONFIGURATION=true
     volumes:
       - ./slskd/config:/app/config
-      - /home/mawfy/Projects/music-server/downloads/soulseek:/app/downloads
+      - ${HOME}/music-server/downloads/soulseek:/app/downloads
     ports:
       - 5030:5030
       - 50300:50300
