@@ -30,11 +30,27 @@ services:
     volumes:
       - ./qbittorrent/config:/config
       - /home/mawfy/Projects/music-server/downloads:/downloads
-      - /home/mawfy/Projects/music-server/media:/media
     ports:
       - 8080:8080
       - 6881:6881
       - 6881:6881/udp
+    restart: unless-stopped
+  slskd:
+    image: slskd/slskd:latest
+    container_name: slskd
+    networks:
+      - music-net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Bogota
+      - SLSKD_REMOTE_CONFIGURATION=true # Para configurar todo desde la web
+    volumes:
+      - ./slskd/config:/app/config
+      - /home/mawfy/Projects/music-server/downloads/soulseek:/app/downloads
+    ports:
+      - 5030:5030 # Interfaz Web
+      - 50300:50300 # Puerto para transferencias
     restart: unless-stopped
 
 networks:
