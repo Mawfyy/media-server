@@ -135,6 +135,17 @@ services:
       - ${MEDIA_PATH}/nextcloud/db:/var/lib/mysql:Z
     restart: unless-stopped
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    networks:
+      - music-net
+    ports:
+      - "80:80"
+    volumes:
+      - ${MEDIA_PATH}/nginx/conf:/etc/nginx/conf.d
+    restart: unless-stopped
+
 networks:
   music-net:
     driver: bridge
