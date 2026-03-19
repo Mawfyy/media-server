@@ -82,6 +82,58 @@ services:
       - ${MEDIA_PATH}/shelfmark/config:/config
       - ${MEDIA_PATH}/media/books:/books
     restart: unless-stopped
+    
+  # Self-hosted Git Service (Forgejo)
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:latest
+    container_name: forgejo
+    networks:
+      - music-net
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+    volumes:
+      - ${MEDIA_PATH}/forgejo/data:/data:Z
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "2222:22" # Port for SSH git clones
+    restart: unless-stopped
+
+  # Cloud Storage (Nextcloud)
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    networks:
+      - music-net
+    depends_on:
+      - nextcloud-db
+    environment:
+      - MYSQL_PASSWORD=nextcloud_db_password
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=nextcloud-db
+    volumes:
+      - ${MEDIA_PATH}/nextcloud/data:/var/www/html:Z
+    ports:
+      - "8081:80" # Moved to 8081 to avoid conflict with qBittorrent (8080)
+    restart: unless-stopped
+
+  # Database for Nextcloud
+  nextcloud-db:
+    image: mariadb:10.6
+    container_name: nextcloud-db
+    networks:
+      - music-net
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_db_password
+      - MYSQL_PASSWORD=nextcloud_db_password
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+    volumes:
+      - ${MEDIA_PATH}/nextcloud/db:/var/lib/mysql:Z
+    restart: unless-stopped
 
 networks:
   music-net:
