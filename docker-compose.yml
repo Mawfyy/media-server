@@ -144,6 +144,7 @@ services:
       - "80:80"
     volumes:
       - ${MEDIA_PATH}/nginx/conf:/etc/nginx/conf.d
+      - ${MEDIA_PATH}/nginx/certs:/etc/nginx/certs
     restart: unless-stopped
 
 networks:
