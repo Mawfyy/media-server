@@ -85,7 +85,7 @@ services:
     
   # Self-hosted Git Service (Forgejo)
   forgejo:
-    image: codeberg.org/forgejo/forgejo:latest
+    image: codeberg.org/forgejo/forgejo:14
     container_name: forgejo
     networks:
       - music-net
