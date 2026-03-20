@@ -142,6 +142,7 @@ services:
       - music-net
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ${MEDIA_PATH}/nginx/conf:/etc/nginx/conf.d
       - ${MEDIA_PATH}/nginx/certs:/etc/nginx/certs
