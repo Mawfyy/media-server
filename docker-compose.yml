@@ -158,6 +158,16 @@ services:
       - DOMAINS=${MY_DOMAIN},*.${MY_DOMAIN}
       - PROXIED=true
 
+  tunnel:
+      container_name: cloudflare-tunnel
+      image: cloudflare/cloudflared:latest
+      restart: always
+      environment:
+        - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+      command: tunnel --no-autoupdate run
+      networks:
+        - music-net  # This must match your Nginx network!
+
 networks:
   music-net:
     driver: bridge
