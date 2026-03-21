@@ -148,6 +148,16 @@ services:
       - ${MEDIA_PATH}/nginx/certs:/etc/nginx/certs
     restart: unless-stopped
 
+  cloudflare-ddns:
+    image: favonia/cloudflare-ddns:latest
+    container_name: cloudflare-ddns
+    network_mode: host 
+    restart: always
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CF_API_TOKEN}
+      - DOMAINS=${MY_DOMAIN},*.${MY_DOMAIN}
+      - PROXIED=true
+
 networks:
   music-net:
     driver: bridge
