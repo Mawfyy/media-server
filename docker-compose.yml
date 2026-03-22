@@ -133,19 +133,33 @@ services:
       - music-net
 
   soulsync:
-    image: nezreka/soulsync:latest
-    container_name: soulsync
+    image: boulderbadgedad/soulsync:latest
+    container_name: soulsync-webui
+    hostname: soulsync
     networks:
       - music-net
     environment:
-      - SLSKD_URL=http://slskd:5030
-      - SLSKD_API_KEY=${SLSKD_TOKEN} # Get this from slskd Web UI > Settings
-    volumes:
-      - ${MEDIA_PATH}/media/music:/app/music:Z # Where it puts the final files
-      - ${MEDIA_PATH}/downloads/slskd:/app/downloads:Z # Where slskd is downloading
+      - PUID=1000
+      - PGID=1000
+      - UMASK=022
+      - FLASK_ENV=production
+      - TZ=America/Bogota  # Updated for Cali
+      - SLSKD_URL=http://slskd:5030 # Point to your slskd container
+      - SLSKD_API_KEY=${SLSKD_TOKEN}
     ports:
-      - "8085:8085"
+      - "8008:8008"
+    volumes:
+      # Use your existing MEDIA_PATH variable
+      - ${MEDIA_PATH}/soulsync/config:/app/config:Z
+      - ${MEDIA_PATH}/soulsync/logs:/app/logs:Z
+      - ${MEDIA_PATH}/downloads/slskd:/app/downloads:Z # Where slskd drops files
+      - ${MEDIA_PATH}/media/music:/music:rw:Z       # Where Navidrome looks
+      - soulsync_database:/app/data:Z
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G # Reduced from 2G to keep your server lightweight
 
 networks:
   music-net:
