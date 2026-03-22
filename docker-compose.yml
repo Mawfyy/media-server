@@ -1,22 +1,8 @@
 services:
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    networks:
-      - music-net
-    restart: always
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${MEDIA_PATH}/portainer_data:/data
-    ports:
-      - 9443:9443
-
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
+    hostname: jellyfin
     networks:
       - music-net
     environment:
@@ -24,8 +10,8 @@ services:
       - PGID=1000
       - TZ=America/Bogota
     volumes:
-      - ${MEDIA_PATH}/jellyfin/config:/config
-      - ${MEDIA_PATH}/media:/media
+      - ${MEDIA_PATH}/jellyfin/config:/config:Z
+      - ${MEDIA_PATH}/media:/media:Z
     ports:
       - 8096:8096
     restart: unless-stopped
@@ -33,6 +19,7 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
+    hostname: qbittorrent
     networks:
       - music-net
     environment:
@@ -41,8 +28,8 @@ services:
       - TZ=America/Bogota
       - WEBUI_PORT=8080
     volumes:
-      - ${MEDIA_PATH}/qbittorrent/config:/config
-      - ${MEDIA_PATH}/downloads:/downloads
+      - ${MEDIA_PATH}/qbittorrent/config:/config:Z
+      - ${MEDIA_PATH}/downloads:/downloads:Z
     ports:
       - 8080:8080
       - 6881:6881
@@ -52,6 +39,7 @@ services:
   slskd:
     image: slskd/slskd:latest
     container_name: slskd
+    hostname: slskd
     networks:
       - music-net
     environment:
@@ -60,8 +48,8 @@ services:
       - TZ=America/Bogota
       - SLSKD_REMOTE_CONFIGURATION=true
     volumes:
-      - ${MEDIA_PATH}/slskd/config:/app/config
-      - ${MEDIA_PATH}/downloads:/downloads
+      - ${MEDIA_PATH}/slskd/config:/app/config:Z
+      - ${MEDIA_PATH}/downloads:/downloads:Z
     ports:
       - 5030:5030
       - 50300:50300
@@ -70,6 +58,7 @@ services:
   shelfmark:
     image: ghcr.io/calibrain/shelfmark:latest
     container_name: shelfmark
+    hostname: shelfmark
     networks:
       - music-net
     environment:
@@ -79,14 +68,14 @@ services:
     ports:
       - 8084:8084
     volumes:
-      - ${MEDIA_PATH}/shelfmark/config:/config
-      - ${MEDIA_PATH}/media/books:/books
+      - ${MEDIA_PATH}/shelfmark/config:/config:Z
+      - ${MEDIA_PATH}/media/books:/books:Z
     restart: unless-stopped
-    
-  # Self-hosted Git Service (Forgejo)
+
   forgejo:
     image: codeberg.org/forgejo/forgejo:14
     container_name: forgejo
+    hostname: forgejo
     networks:
       - music-net
     environment:
@@ -97,77 +86,35 @@ services:
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "3000:3000"
-      - "2222:22" # Port for SSH git clones
-    restart: unless-stopped
-
-  # Cloud Storage (Nextcloud)
-  nextcloud:
-    image: nextcloud:latest
-    container_name: nextcloud
-    networks:
-      - music-net
-    depends_on:
-      - nextcloud-db
-    environment:
-      - MYSQL_PASSWORD=nextcloud_db_password
-      - MYSQL_DATABASE=nextcloud
-      - MYSQL_USER=nextcloud
-      - MYSQL_HOST=nextcloud-db
-    volumes:
-      - ${MEDIA_PATH}/nextcloud/data:/var/www/html:Z
-    ports:
-      - "8081:80" # Moved to 8081 to avoid conflict with qBittorrent (8080)
-    restart: unless-stopped
-
-  # Database for Nextcloud
-  nextcloud-db:
-    image: mariadb:10.6
-    container_name: nextcloud-db
-    networks:
-      - music-net
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
-    environment:
-      - MYSQL_ROOT_PASSWORD=root_db_password
-      - MYSQL_PASSWORD=nextcloud_db_password
-      - MYSQL_DATABASE=nextcloud
-      - MYSQL_USER=nextcloud
-    volumes:
-      - ${MEDIA_PATH}/nextcloud/db:/var/lib/mysql:Z
+      - "2222:22"
     restart: unless-stopped
 
   nginx:
     image: nginx:latest
     container_name: nginx
+    hostname: nginx # Fixes the internal DNS lookup for the tunnel
     networks:
       - music-net
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ${MEDIA_PATH}/nginx/conf:/etc/nginx/conf.d
-      - ${MEDIA_PATH}/nginx/certs:/etc/nginx/certs
+      - ${MEDIA_PATH}/nginx/conf:/etc/nginx/conf.d:Z # Critical for Fedora
+      - ${MEDIA_PATH}/nginx/certs:/etc/nginx/certs:Z
     restart: unless-stopped
 
-  cloudflare-ddns:
-    image: favonia/cloudflare-ddns:latest
-    container_name: cloudflare-ddns
-    network_mode: host 
+  tunnel:
+    container_name: cloudflare-tunnel
+    hostname: cloudflare-tunnel
+    image: cloudflare/cloudflared:latest
     restart: always
     environment:
-      - CLOUDFLARE_API_TOKEN=${CF_API_TOKEN}
-      - DOMAINS=${MY_DOMAIN},*.${MY_DOMAIN}
-      - PROXIED=true
-
-  tunnel:
-      container_name: cloudflare-tunnel
-      image: cloudflare/cloudflared:latest
-      restart: always
-      environment:
-        - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
-      command: tunnel --no-autoupdate run
-      networks:
-        - music-net  # This must match your Nginx network!
+      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run
+    networks:
+      - music-net
 
 networks:
   music-net:
     driver: bridge
+    name: music-net
