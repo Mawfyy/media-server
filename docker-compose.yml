@@ -16,6 +16,24 @@ services:
       - 8096:8096
     restart: unless-stopped
 
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    hostname: radarr
+    networks:
+      - music-net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Bogota
+    volumes:
+      - ${MEDIA_PATH}/radarr/config:/config:Z
+      - ${MEDIA_PATH}/media:/media:Z     # Final destination (Jellyfin folder)
+      - ${MEDIA_PATH}/downloads:/downloads:Z # Where qBittorrent puts the files
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
@@ -113,6 +131,21 @@ services:
     command: tunnel --no-autoupdate run
     networks:
       - music-net
+
+  soulsync:
+    image: nezreka/soulsync:latest
+    container_name: soulsync
+    networks:
+      - music-net
+    environment:
+      - SLSKD_URL=http://slskd:5030
+      - SLSKD_API_KEY=${SLSKD_TOKEN} # Get this from slskd Web UI > Settings
+    volumes:
+      - ${MEDIA_PATH}/media/music:/app/music:Z # Where it puts the final files
+      - ${MEDIA_PATH}/downloads/slskd:/app/downloads:Z # Where slskd is downloading
+    ports:
+      - "8085:8085"
+    restart: unless-stopped
 
 networks:
   music-net:
